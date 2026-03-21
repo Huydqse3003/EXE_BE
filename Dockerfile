@@ -16,7 +16,7 @@ COPY EXE_BE/EXE_BE.Infrastructure/*.csproj EXE_BE/EXE_BE.Infrastructure/
 RUN dotnet restore EXE_BE/EXE_BE.API/EXE_BE.API.csproj
 
 # Copy full source
-COPY EXE_BE/. .
+COPY . .
 
 # Publish
 RUN dotnet publish EXE_BE.API/EXE_BE.API.csproj -c Release -o /app/publish
