@@ -7,14 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 🔥 FIX PORT (đặt trước Build)
+// PORT
 var port = Environment.GetEnvironmentVariable("PORT") ?? "10000";
 builder.WebHost.UseUrls($"http://*:{port}");
 
 // DB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+Console.WriteLine("DB_STRING: " + connectionString);
+
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 32))));
 
 // Services
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
@@ -27,8 +29,8 @@ builder.Services.AddScoped<IFriendshipService, FriendshipService>();
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
+// Swagger + JWT
 builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
@@ -59,7 +61,7 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// 🔥 LUÔN bật Swagger
+// Swagger luôn bật
 app.UseSwagger();
 app.UseSwaggerUI();
 
