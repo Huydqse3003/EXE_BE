@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY . .
 
-# 🔥 CHỈ RÕ FILE SLN
-RUN dotnet restore EXE_BE.sln
+# 🔥 restore trực tiếp project
+RUN dotnet restore EXE_BE/EXE_BE.API/EXE_BE.API.csproj
 
-# 🔥 BUILD API
-RUN dotnet publish EXE_BE.API/EXE_BE.API.csproj -c Release -o /out
+# 🔥 publish
+RUN dotnet publish EXE_BE/EXE_BE.API/EXE_BE.API.csproj -c Release -o /out
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
