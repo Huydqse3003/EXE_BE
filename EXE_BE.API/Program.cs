@@ -71,4 +71,33 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<RealtimeHub>("/hubs/realtime");
 
+// 🔥 CHECK DB CONNECTION
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        logger.LogInformation("🔄 Checking database connection...");
+
+        var canConnect = db.Database.CanConnect();
+
+        if (canConnect)
+        {
+            logger.LogInformation("✅ DATABASE CONNECTED SUCCESSFULLY");
+        }
+        else
+        {
+            logger.LogError("❌ DATABASE CONNECTION FAILED (CanConnect = false)");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError("💥 DATABASE CONNECTION ERROR: {Message}", ex.Message);
+        logger.LogError("💥 STACK TRACE: {StackTrace}", ex.StackTrace);
+    }
+}
+
 app.Run();
