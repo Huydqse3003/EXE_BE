@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="EXE_BE.API/EXE_BE.API.csproj" />
+  <Project Path="EXE_BE.Application/EXE_BE.Application.csproj" />
+  <Project Path="EXE_BE.Domain/EXE_BE.Domain.csproj" />
+  <Project Path="EXE_BE.Infrastructure/EXE_BE.Infrastructure.csproj" />
+</Solution>
