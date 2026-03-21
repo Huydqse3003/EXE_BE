@@ -1,22 +1,39 @@
-# Build stage
+# =========================
+# BUILD STAGE
+# =========================
 FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
-WORKDIR /app
+WORKDIR /src
 
-COPY . .
+# Copy sln + csproj trước (tối ưu cache)
+COPY EXE_BE/*.sln ./
 
-# 🔥 restore trực tiếp project
+COPY EXE_BE/EXE_BE.API/*.csproj EXE_BE/EXE_BE.API/
+COPY EXE_BE/EXE_BE.Application/*.csproj EXE_BE/EXE_BE.Application/
+COPY EXE_BE/EXE_BE.Domain/*.csproj EXE_BE/EXE_BE.Domain/
+COPY EXE_BE/EXE_BE.Infrastructure/*.csproj EXE_BE/EXE_BE.Infrastructure/
+
+# Restore
 RUN dotnet restore EXE_BE/EXE_BE.API/EXE_BE.API.csproj
 
-# 🔥 publish
-RUN dotnet publish EXE_BE/EXE_BE.API/EXE_BE.API.csproj -c Release -o /out
+# Copy full source
+COPY EXE_BE/. .
 
-# Runtime stage
+# Publish
+RUN dotnet publish EXE_BE.API/EXE_BE.API.csproj -c Release -o /app/publish
+
+# =========================
+# RUNTIME STAGE
+# =========================
 FROM mcr.microsoft.com/dotnet/aspnet:7.0
 WORKDIR /app
 
-COPY --from=build /out .
+COPY --from=build /app/publish .
 
-ENV ASPNETCORE_URLS=http://+:10000
+# 🔥 Quan trọng cho Render
+ENV ASPNETCORE_URLS=http://+:${PORT}
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+# Render sẽ inject PORT (thường là 10000)
 EXPOSE 10000
 
 ENTRYPOINT ["dotnet", "EXE_BE.API.dll"]
