@@ -1,12 +1,12 @@
 using EXE_BE.Application.DTOs.Requests.Auth;
-using EXE_BE.Application.DTOs.Responses.Auth;
+using EXE_BE.Application.DTOs.Responses;
 
 namespace EXE_BE.Application.IServices
 {
     public interface IAuthService
     {
-        Task<AuthResponse> RegisterAsync(RegisterRequest request);
-        Task<AuthResponse> LoginAsync(LoginRequest request);
-        Task<AuthResponse> ResetPasswordAsync(ResetPasswordRequest request);
+        Task<ApiResponse> RegisterAsync(RegisterRequest request);
+        Task<ApiResponse> LoginAsync(LoginRequest request);
+        Task<ApiResponse> ResetPasswordAsync(ResetPasswordRequest request);
     }
 }

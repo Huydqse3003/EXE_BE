@@ -17,6 +17,7 @@ namespace EXE_BE.Infrastructure
         public IUserItemRepository UserItems { get; }
         public ISubscriptionPackageRepository SubscriptionPackages { get; }
         public IUserSubscriptionRepository UserSubscriptions { get; }
+        public IPaymentTransactionRepository PaymentTransactions { get; }
         public IUserPurchaseRepository UserPurchases { get; }
         public IUserCoinTransactionRepository UserCoinTransactions { get; }
         public IStudyRoomRepository StudyRooms { get; }
@@ -39,6 +40,7 @@ namespace EXE_BE.Infrastructure
             UserItems = new UserItemRepository(context);
             SubscriptionPackages = new SubscriptionPackageRepository(context);
             UserSubscriptions = new UserSubscriptionRepository(context);
+            PaymentTransactions = new PaymentTransactionRepository(context);
             UserPurchases = new UserPurchaseRepository(context);
             UserCoinTransactions = new UserCoinTransactionRepository(context);
             StudyRooms = new StudyRoomRepository(context);

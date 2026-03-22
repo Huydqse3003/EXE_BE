@@ -1,4 +1,5 @@
 using EXE_BE.Application.DTOs.Requests.UserHabit;
+using EXE_BE.Application.DTOs.Responses;
 using EXE_BE.Application.DTOs.Responses.UserHabit;
 using EXE_BE.Application.IServices;
 using EXE_BE.Domain.Entities;
@@ -14,15 +15,20 @@ namespace EXE_BE.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<UserHabitResponse> LogHabitAsync(CreateUserHabitRequest request)
+        public async Task<ApiResponse> LogHabitAsync(CreateUserHabitRequest request)
         {
+            var response = new ApiResponse();
+
             if (string.IsNullOrWhiteSpace(request.HabitType))
             {
-                throw new InvalidOperationException("HabitType không được để trống.");
+                return response.SetBadRequest(message: "HabitType không được để trống.");
             }
 
-            var user = await _unitOfWork.Users.GetByIdAsync(request.UserId)
-                ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
+            var user = await _unitOfWork.Users.GetByIdAsync(request.UserId);
+            if (user == null)
+            {
+                return response.SetNotFound(message: "Không tìm thấy người dùng.");
+            }
 
             var entity = new UserHabit
             {
@@ -39,26 +45,39 @@ namespace EXE_BE.Application.Services
             await _unitOfWork.UserHabits.AddAsync(entity);
             await _unitOfWork.SaveChangesAsync();
 
-            return Map(entity);
+            return response.SetOk(Map(entity));
         }
 
-        public async Task<IEnumerable<UserHabitResponse>> GetByUserIdAsync(Guid userId)
+        public async Task<ApiResponse> GetByUserIdAsync(Guid userId)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId)
-                ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
+            var response = new ApiResponse();
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return response.SetNotFound(message: "Không tìm thấy người dùng.");
+            }
 
             var habits = await _unitOfWork.UserHabits.FindAsync(h => h.UserId == user.UserId);
 
-            return habits
+            return response.SetOk(habits
                 .OrderByDescending(h => h.EventTime)
-                .Select(Map);
+                .Select(Map));
         }
 
-        public async Task<UserHabitSummaryResponse> GetSummaryByUserIdAsync(Guid userId)
+        public async Task<ApiResponse> GetSummaryByUserIdAsync(Guid userId)
         {
-            var allHabits = (await GetByUserIdAsync(userId)).ToList();
+            var response = new ApiResponse();
+            var habitsResponse = await GetByUserIdAsync(userId);
 
-            return new UserHabitSummaryResponse
+            if (!habitsResponse.IsSuccess)
+            {
+                return habitsResponse;
+            }
+
+            var allHabits = ((IEnumerable<UserHabitResponse>?)habitsResponse.Result)?.ToList() ?? [];
+
+            return response.SetOk(new UserHabitSummaryResponse
             {
                 UserId = userId,
                 TotalHabits = allHabits.Count,
@@ -75,7 +94,7 @@ namespace EXE_BE.Application.Services
                     .OrderByDescending(h => h.EventTime)
                     .Select(h => (DateTime?)h.EventTime)
                     .FirstOrDefault()
-            };
+            });
         }
 
         private static UserHabitResponse Map(UserHabit entity)

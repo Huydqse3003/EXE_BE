@@ -1,6 +1,9 @@
 using EXE_BE.Application.DTOs.Requests.Auth;
+using EXE_BE.Application.DTOs.Responses;
+using EXE_BE.Application.DTOs.Responses.Auth;
 using EXE_BE.API.Hubs;
 using EXE_BE.Application.IServices;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 
@@ -8,6 +11,7 @@ namespace EXE_BE.API.Controllers
 {
     [ApiController]
     [Route("api/auth")]
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
@@ -19,50 +23,78 @@ namespace EXE_BE.API.Controllers
             _hubContext = hubContext;
         }
 
+        /// <summary>
+        /// Đăng ký tài khoản mới.
+        /// </summary>
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var result = await _authService.RegisterAsync(request);
-                await _hubContext.Clients.Group($"user:{result.UserId}")
-                    .SendAsync("UserRegistered", result);
-                return Ok(result);
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new ApiResponse().SetBadRequest(message: string.Join("; ", errors)));
             }
-            catch (InvalidOperationException ex)
+
+            var response = await _authService.RegisterAsync(request);
+
+            if (response.IsSuccess && response.Result is AuthResponse authResponse)
             {
-                return BadRequest(ex.Message);
+                await _hubContext.Clients.Group($"user:{authResponse.UserId}")
+                    .SendAsync("UserRegistered", authResponse);
             }
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
+        /// <summary>
+        /// Đăng nhập bằng thông tin tài khoản.
+        /// </summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var result = await _authService.LoginAsync(request);
-                await _hubContext.Clients.Group($"user:{result.UserId}")
-                    .SendAsync("UserLoggedIn", result);
-                return Ok(result);
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new ApiResponse().SetBadRequest(message: string.Join("; ", errors)));
             }
-            catch (InvalidOperationException ex)
+
+            var response = await _authService.LoginAsync(request);
+
+            if (response.IsSuccess && response.Result is AuthResponse authResponse)
             {
-                return BadRequest(ex.Message);
+                await _hubContext.Clients.Group($"user:{authResponse.UserId}")
+                    .SendAsync("UserLoggedIn", authResponse);
             }
+
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
 
+        /// <summary>
+        /// Đặt lại mật khẩu cho tài khoản.
+        /// </summary>
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request)
         {
-            try
+            if (!ModelState.IsValid)
             {
-                var result = await _authService.ResetPasswordAsync(request);
-                return Ok(result);
+                var errors = ModelState.Values
+                    .SelectMany(v => v.Errors)
+                    .Select(e => e.ErrorMessage)
+                    .ToList();
+
+                return BadRequest(new ApiResponse().SetBadRequest(message: string.Join("; ", errors)));
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
+            var response = await _authService.ResetPasswordAsync(request);
+            return response.IsSuccess ? Ok(response) : BadRequest(response);
         }
     }
 }
