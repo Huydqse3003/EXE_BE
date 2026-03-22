@@ -19,8 +19,9 @@ builder.Services.AddSingleton(appSettings);
 
 var connectionString = appSettings.ConnectionStrings.DefaultConnection;
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+    options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 32))));
 
+// Services
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IGameplayService, GameplayService>();
 builder.Services.AddScoped<IUserHabitService, UserHabitService>();
@@ -56,7 +57,6 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddSignalR();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -86,12 +86,9 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger luôn bật
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
@@ -100,5 +97,34 @@ app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<RealtimeHub>("/hubs/realtime");
+
+// 🔥 CHECK DB CONNECTION
+using (var scope = app.Services.CreateScope())
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        logger.LogInformation("🔄 Checking database connection...");
+
+        var canConnect = db.Database.CanConnect();
+
+        if (canConnect)
+        {
+            logger.LogInformation("✅ DATABASE CONNECTED SUCCESSFULLY");
+        }
+        else
+        {
+            logger.LogError("❌ DATABASE CONNECTION FAILED (CanConnect = false)");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError("💥 DATABASE CONNECTION ERROR: {Message}", ex.Message);
+        logger.LogError("💥 STACK TRACE: {StackTrace}", ex.StackTrace);
+    }
+}
 
 app.Run();
