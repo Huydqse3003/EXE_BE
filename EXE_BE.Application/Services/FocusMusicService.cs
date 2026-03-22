@@ -1,4 +1,5 @@
 using EXE_BE.Application.DTOs.Requests.FocusMusic;
+using EXE_BE.Application.DTOs.Responses;
 using EXE_BE.Application.DTOs.Responses.FocusMusic;
 using EXE_BE.Application.IServices;
 using EXE_BE.Domain.Entities;
@@ -14,15 +15,20 @@ namespace EXE_BE.Application.Services
             _unitOfWork = unitOfWork;
         }
 
-        public async Task<FocusMusicResponse> AddAsync(CreateFocusMusicRequest request)
+        public async Task<ApiResponse> AddAsync(CreateFocusMusicRequest request)
         {
+            var response = new ApiResponse();
+
             if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.AudioUrl))
             {
-                throw new InvalidOperationException("Tên nhạc và đường dẫn nhạc không được để trống.");
+                return response.SetBadRequest(message: "Tên nhạc và đường dẫn nhạc không được để trống.");
             }
 
-            var user = await _unitOfWork.Users.GetByIdAsync(request.UserId)
-                ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
+            var user = await _unitOfWork.Users.GetByIdAsync(request.UserId);
+            if (user == null)
+            {
+                return response.SetNotFound(message: "Không tìm thấy người dùng.");
+            }
 
             var music = new FocusMusic
             {
@@ -47,7 +53,7 @@ namespace EXE_BE.Application.Services
 
             await _unitOfWork.SaveChangesAsync();
 
-            return new FocusMusicResponse
+            return response.SetOk(new FocusMusicResponse
             {
                 MusicId = music.MusicId,
                 UserId = music.UserId,
@@ -56,17 +62,22 @@ namespace EXE_BE.Application.Services
                 AudioUrl = music.AudioUrl,
                 CreatedAt = music.CreatedAt,
                 IsCurrent = user.CurrentFocusMusicId == music.MusicId
-            };
+            });
         }
 
-        public async Task<IEnumerable<FocusMusicResponse>> GetByUserIdAsync(Guid userId)
+        public async Task<ApiResponse> GetByUserIdAsync(Guid userId)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId)
-                ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
+            var response = new ApiResponse();
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return response.SetNotFound(message: "Không tìm thấy người dùng.");
+            }
 
             var musics = await _unitOfWork.FocusMusics.FindAsync(m => m.UserId == userId);
 
-            return musics
+            return response.SetOk(musics
                 .OrderByDescending(m => m.CreatedAt)
                 .Select(m => new FocusMusicResponse
                 {
@@ -77,26 +88,31 @@ namespace EXE_BE.Application.Services
                     AudioUrl = m.AudioUrl,
                     CreatedAt = m.CreatedAt,
                     IsCurrent = user.CurrentFocusMusicId == m.MusicId
-                });
+                }));
         }
 
-        public async Task<FocusMusicResponse?> GetCurrentByUserIdAsync(Guid userId)
+        public async Task<ApiResponse> GetCurrentByUserIdAsync(Guid userId)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId)
-                ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
+            var response = new ApiResponse();
+
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return response.SetNotFound(message: "Không tìm thấy người dùng.");
+            }
 
             if (!user.CurrentFocusMusicId.HasValue)
             {
-                return null;
+                return response.SetOk(result: null);
             }
 
             var music = await _unitOfWork.FocusMusics.GetByIdAsync(user.CurrentFocusMusicId.Value);
             if (music == null)
             {
-                return null;
+                return response.SetOk(result: null);
             }
 
-            return new FocusMusicResponse
+            return response.SetOk(new FocusMusicResponse
             {
                 MusicId = music.MusicId,
                 UserId = music.UserId,
@@ -105,20 +121,28 @@ namespace EXE_BE.Application.Services
                 AudioUrl = music.AudioUrl,
                 CreatedAt = music.CreatedAt,
                 IsCurrent = true
-            };
+            });
         }
 
-        public async Task<FocusMusicResponse> SetCurrentAsync(Guid userId, Guid musicId)
+        public async Task<ApiResponse> SetCurrentAsync(Guid userId, Guid musicId)
         {
-            var user = await _unitOfWork.Users.GetByIdAsync(userId)
-                ?? throw new KeyNotFoundException("Không tìm thấy người dùng.");
+            var response = new ApiResponse();
 
-            var music = await _unitOfWork.FocusMusics.GetByIdAsync(musicId)
-                ?? throw new KeyNotFoundException("Không tìm thấy nhạc.");
+            var user = await _unitOfWork.Users.GetByIdAsync(userId);
+            if (user == null)
+            {
+                return response.SetNotFound(message: "Không tìm thấy người dùng.");
+            }
+
+            var music = await _unitOfWork.FocusMusics.GetByIdAsync(musicId);
+            if (music == null)
+            {
+                return response.SetNotFound(message: "Không tìm thấy nhạc.");
+            }
 
             if (music.UserId != userId)
             {
-                throw new InvalidOperationException("Bạn chỉ được chọn nhạc của chính mình.");
+                return response.SetBadRequest(message: "Bạn chỉ được chọn nhạc của chính mình.");
             }
 
             user.CurrentFocusMusicId = musicId;
@@ -135,7 +159,7 @@ namespace EXE_BE.Application.Services
 
             await _unitOfWork.SaveChangesAsync();
 
-            return new FocusMusicResponse
+            return response.SetOk(new FocusMusicResponse
             {
                 MusicId = music.MusicId,
                 UserId = music.UserId,
@@ -144,7 +168,7 @@ namespace EXE_BE.Application.Services
                 AudioUrl = music.AudioUrl,
                 CreatedAt = music.CreatedAt,
                 IsCurrent = true
-            };
+            });
         }
     }
 }

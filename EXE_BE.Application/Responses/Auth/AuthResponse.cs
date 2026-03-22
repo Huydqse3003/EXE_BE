@@ -7,6 +7,8 @@ namespace EXE_BE.Application.DTOs.Responses.Auth
         public string Email { get; set; } = string.Empty;
         public int Age { get; set; }
         public string PhoneNumber { get; set; } = string.Empty;
+        public string AccessToken { get; set; } = string.Empty;
+        public DateTime AccessTokenExpiresAt { get; set; }
         public string Message { get; set; } = string.Empty;
     }
 }
