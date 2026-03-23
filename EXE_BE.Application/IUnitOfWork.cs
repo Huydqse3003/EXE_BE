@@ -13,6 +13,7 @@ namespace EXE_BE.Application
         IUserItemRepository UserItems { get; }
         ISubscriptionPackageRepository SubscriptionPackages { get; }
         IUserSubscriptionRepository UserSubscriptions { get; }
+        IPaymentTransactionRepository PaymentTransactions { get; }
         IUserPurchaseRepository UserPurchases { get; }
         IUserCoinTransactionRepository UserCoinTransactions { get; }
         IStudyRoomRepository StudyRooms { get; }

@@ -16,6 +16,7 @@ namespace EXE_BE.Infrastructure
         public DbSet<UserItem> UserItems { get; set; }
         public DbSet<SubscriptionPackage> SubscriptionPackages { get; set; }
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
+        public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
         public DbSet<UserPurchase> UserPurchases { get; set; }
         public DbSet<UserCoinTransaction> UserCoinTransactions { get; set; }
         public DbSet<StudyRoom> StudyRooms { get; set; }
@@ -36,6 +37,7 @@ namespace EXE_BE.Infrastructure
             modelBuilder.Entity<Topic>().HasKey(t => t.TopicId);
             modelBuilder.Entity<GameItem>().HasKey(g => g.ItemId);
             modelBuilder.Entity<SubscriptionPackage>().HasKey(sp => sp.PackageId);
+            modelBuilder.Entity<PaymentTransaction>().HasKey(pt => pt.PaymentTransactionId);
             modelBuilder.Entity<UserPurchase>().HasKey(up => up.PurchaseId);
             modelBuilder.Entity<UserCoinTransaction>().HasKey(uct => uct.TransactionId);
             modelBuilder.Entity<StudyRoom>().HasKey(sr => sr.RoomId);
