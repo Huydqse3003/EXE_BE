@@ -8,13 +8,7 @@ namespace EXE_BE.API.Controllers
     [Route("api/[controller]")]
     public class HealthController : ControllerBase
     {
-        private readonly AppDbContext _dbContext;
-
-        public HealthController(AppDbContext dbContext)
-        {
-            _dbContext = dbContext;
-        }
-
+        // Endpoint siêu nhẹ, không phụ thuộc DB
         [AllowAnonymous]
         [HttpGet("ping")]
         public IActionResult Ping()
@@ -27,6 +21,7 @@ namespace EXE_BE.API.Controllers
             });
         }
 
+        // UptimeRobot free dùng HEAD
         [AllowAnonymous]
         [HttpHead("ping")]
         public IActionResult PingHead()
@@ -34,13 +29,14 @@ namespace EXE_BE.API.Controllers
             return Ok();
         }
 
+        // Check DB riêng, chỉ inject DbContext ở action này
         [AllowAnonymous]
         [HttpGet("db")]
-        public async Task<IActionResult> Db()
+        public async Task<IActionResult> Db([FromServices] AppDbContext dbContext)
         {
             try
             {
-                var canConnect = await _dbContext.Database.CanConnectAsync();
+                var canConnect = await dbContext.Database.CanConnectAsync();
 
                 return Ok(new
                 {
