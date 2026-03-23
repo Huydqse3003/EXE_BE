@@ -2,7 +2,6 @@ using EXE_BE.Infrastructure;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-
 namespace EXE_BE.API.Controllers
 {
     [ApiController]
@@ -26,6 +25,13 @@ namespace EXE_BE.API.Controllers
                 message = "pong",
                 utcTime = DateTime.UtcNow
             });
+        }
+
+        [AllowAnonymous]
+        [HttpHead("ping")]
+        public IActionResult PingHead()
+        {
+            return Ok();
         }
 
         [AllowAnonymous]
@@ -53,6 +59,13 @@ namespace EXE_BE.API.Controllers
                     utcTime = DateTime.UtcNow
                 });
             }
+        }
+
+        [AllowAnonymous]
+        [HttpHead("db")]
+        public IActionResult DbHead()
+        {
+            return Ok();
         }
     }
 }
